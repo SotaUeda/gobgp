@@ -1,4 +1,4 @@
-package bgp
+package peer
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 	peer := NewPeer(config)
 	peer.start()
 	peer.next().await
-	want := State.Connect
+	want := CONNECT
 	if want != peer.state {
 		t.Errorf("Want: %q,  Peer State: %q", &want, peer.state)
 	}
