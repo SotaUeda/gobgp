@@ -12,14 +12,41 @@ type Peer struct {
 	Config     Config
 }
 
-func NewPeer(conf Config) *Peer {
-	p := new(Peer)
-	p.State = IDLE
-	p.EventQueue = make(chan Event)
+func NewPeer(conf *Config) *Peer {
+	p := &Peer{
+		State:      IDLE,
+		EventQueue: make(chan Event),
+	}
 	return p
 }
 
 func (p *Peer) Start() {
 	fmt.Print("peer is started.")
+	// channel は受信した場合でも送信されるまで処理が止まる
+	// goroutin で呼び出す必要がある
+	go start(p)
+}
+
+func start(p *Peer) {
 	p.EventQueue <- MANUAL_START
+}
+
+func (p *Peer) Next() error {
+	if ev, ok := <-p.EventQueue; ok {
+		fmt.Printf("event is occured, event=%v.", ev.Show())
+		p.handleEvent(ev)
+		return nil
+	} else {
+		return fmt.Errorf("EventQueue is Closed")
+	}
+}
+
+func (p *Peer) handleEvent(ev Event) {
+	switch p.State {
+	case IDLE:
+		switch ev {
+		case MANUAL_START:
+			p.State = CONNECT
+		}
+	}
 }
