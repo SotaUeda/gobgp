@@ -23,7 +23,7 @@ const (
 	Active
 )
 
-func NewConfig(s string) (*Config, error) {
+func Str2Config(s string) (*Config, error) {
 	config := strings.Split(s, " ")
 	la, err := strconv.ParseUint(config[0], 10, 16)
 	if err != nil {
