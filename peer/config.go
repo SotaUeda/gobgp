@@ -39,14 +39,14 @@ func Str2Config(s string) (*Config, error) {
 			config[1], s,
 		)
 	}
-	ra, err := strconv.ParseUint(config[0], 10, 16)
+	ra, err := strconv.ParseUint(config[2], 10, 16)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot parse 3rd part of config, %v, as as-number and config is %v",
 			config[2], s,
 		)
 	}
-	ri := net.ParseIP(config[1])
+	ri := net.ParseIP(config[3])
 	if ri == nil {
 		return nil, fmt.Errorf(
 			"cannot parse 4th part of config, %v, as as-number and config is %v",
