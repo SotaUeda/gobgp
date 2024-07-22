@@ -23,7 +23,18 @@ const (
 	Active
 )
 
-func Str2Config(s string) (*Config, error) {
+func parseMode(s string) (Mode, error) {
+	switch s {
+	case "passive":
+		return Passive, nil
+	case "active":
+		return Active, nil
+	default:
+		return 0, fmt.Errorf("string is not mode: %s", s)
+	}
+}
+
+func ParseConfig(s string) (*Config, error) {
 	config := strings.Split(s, " ")
 	la, err := strconv.ParseUint(config[0], 10, 16)
 	if err != nil {
@@ -53,7 +64,7 @@ func Str2Config(s string) (*Config, error) {
 			config[3], s,
 		)
 	}
-	m, err := strconv.ParseInt(config[4], 10, 64)
+	m, err := parseMode(config[4])
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot parse 5th part of config, %v, as as-number and config is %v",

@@ -21,7 +21,7 @@ func NewPeer(conf *Config) *Peer {
 }
 
 func (p *Peer) Start() {
-	fmt.Print("peer is started.")
+	fmt.Print("peer is started.\n")
 	// channel は受信した場合でも送信されるまで処理が止まる
 	// goroutin で呼び出す必要がある
 	go start(p)
@@ -33,7 +33,7 @@ func start(p *Peer) {
 
 func (p *Peer) Next() error {
 	if ev, ok := <-p.EventQueue; ok {
-		fmt.Printf("event is occured, event=%v.", ev.Show())
+		fmt.Printf("event is occured, event=%v.\n", ev.Show())
 		p.handleEvent(ev)
 		return nil
 	} else {
