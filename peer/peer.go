@@ -1,6 +1,9 @@
 package peer
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // BFPのRFCで示されている実装方針
 // (https://datatracker.ietf.org/doc/html/rfc4271#section-8)では、
@@ -31,13 +34,15 @@ func start(p *Peer) {
 	p.EventQueue <- MANUAL_START
 }
 
-func (p *Peer) Next() error {
-	if ev, ok := <-p.EventQueue; ok {
+func (p *Peer) Next(ctx context.Context) error {
+	select {
+	case ev := <-p.EventQueue:
 		fmt.Printf("event is occured, event=%v.\n", ev.Show())
 		p.handleEvent(ev)
 		return nil
-	} else {
-		return fmt.Errorf("EventQueue is Closed")
+	case <-ctx.Done():
+		fmt.Print("func next is done")
+		return nil
 	}
 }
 

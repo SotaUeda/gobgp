@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/SotaUeda/gobgp/peer"
@@ -25,12 +28,22 @@ func main() {
 		p.Start()
 	}
 
+	ctx, cansel := context.WithCancel(context.Background())
 	for _, p := range peers {
-		for {
-			p.Next()
-			time.Sleep(100 * time.Millisecond)
-		}
+		go func() {
+			for {
+				p.Next(ctx)
+				time.Sleep(100 * time.Millisecond)
+			}
+		}()
 	}
-}
 
-// Context必要？
+	// Ctrl-c入力時にプログラムを停止
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		cansel()
+	}()
+	<-ctx.Done()
+}
