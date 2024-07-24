@@ -12,7 +12,7 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 	peer.Start()
 	ctx := context.Background()
 	go func() {
-		remote_config, _ := ParseConfig("64512 127.0.0.2 65412 127.0.0.1 active")
+		remote_config, _ := ParseConfig("64512 127.0.0.2 65412 127.0.0.1 passive")
 		remote_peer := NewPeer(remote_config)
 		remote_peer.Start()
 		remote_peer.Next(ctx)
