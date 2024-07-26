@@ -24,4 +24,5 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 	if want != peer.State {
 		t.Errorf("Want: %d,  Peer State: %d", want, peer.State)
 	}
+	ctx.Done()
 }

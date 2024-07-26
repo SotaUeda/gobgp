@@ -12,13 +12,15 @@ import (
 type Peer struct {
 	State      State
 	EventQueue chan Event
-	Config     Config
+	TCPConn    *Connection
+	Config     *Config
 }
 
 func NewPeer(conf *Config) *Peer {
 	p := &Peer{
 		State:      IDLE,
 		EventQueue: make(chan Event),
+		Config:     conf,
 	}
 	return p
 }
@@ -42,16 +44,27 @@ func (p *Peer) Next(ctx context.Context) error {
 		return nil
 	case <-ctx.Done():
 		fmt.Print("func next is done")
+		if p.TCPConn != nil {
+			p.TCPConn.conn.Close()
+			fmt.Print("close connection")
+		}
 		return nil
 	}
 }
 
-func (p *Peer) handleEvent(ev Event) {
+func (p *Peer) handleEvent(ev Event) error {
 	switch p.State {
 	case IDLE:
 		switch ev {
 		case MANUAL_START:
+			// 参考記事 https://qiita.com/tutuz/items/e875d8ea3c31450195a7
+			conn, err := NewConnection(p.Config)
+			if err != nil {
+				return err
+			}
+			p.TCPConn = conn
 			p.State = CONNECT
 		}
 	}
+	return nil
 }

@@ -9,12 +9,17 @@ type Event int
 
 const (
 	MANUAL_START Event = iota
+	// 正常系しか実装しない本実装では別のEventとして扱う意味がないため、
+	// TcpConnectionConfirmedはTcpAckedも兼ねている。
+	TCP_CONNECTION_CONFIRMED
 )
 
 func (ev Event) Show() string {
 	switch ev {
 	case MANUAL_START:
 		return "Manual Start"
+	case TCP_CONNECTION_CONFIRMED:
+		return "TCP Connection Confirmed"
 	default:
 		return fmt.Sprintf("%v", ev)
 	}
