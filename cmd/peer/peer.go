@@ -29,11 +29,7 @@ func (p *Peer) Start() {
 	fmt.Print("peer is started.\n")
 	// channel は受信した場合でも送信されるまで処理が止まる
 	// goroutin で呼び出す必要がある
-	go start(p)
-}
-
-func start(p *Peer) {
-	p.EventQueue <- MANUAL_START
+	go func() { p.EventQueue <- MANUAL_START }()
 }
 
 func (p *Peer) Next(ctx context.Context) error {
@@ -63,7 +59,16 @@ func (p *Peer) handleEvent(ev Event) error {
 				return err
 			}
 			p.TCPConn = conn
+			if p.TCPConn == nil {
+				return fmt.Errorf("TCP Connectionが確立できませんでした")
+			}
+			go func() { p.EventQueue <- TCP_CONNECTION_CONFIRMED }()
 			p.State = CONNECT
+		}
+	case CONNECT:
+		switch ev {
+		case TCP_CONNECTION_CONFIRMED:
+			p.State = OPEN_SENT
 		}
 	}
 	return nil
