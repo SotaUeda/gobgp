@@ -1,3 +1,3 @@
 module github.com/SotaUeda/gobgp
 
-go 1.22.0
+go 1.22.5
