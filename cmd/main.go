@@ -12,8 +12,10 @@ import (
 )
 
 func main() {
+	// 引数で与えられた文字列を順に結合してconfig文字列を作成
+	config := os.Args[1]
 	confStrs := []string{
-		"64512 127.0.0.1 65413 127.0.0.2 active",
+		config,
 	}
 	var peers []peer.Peer
 	for _, s := range confStrs {
