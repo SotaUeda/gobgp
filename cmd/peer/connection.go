@@ -9,7 +9,7 @@ type Connection struct {
 	conn *net.TCPConn
 }
 
-const BGP_PORT = 179
+const BGP_PORT = 179 // BGPは179番ポートで固定
 
 func NewConnection(c *Config) (*Connection, error) {
 	var (
