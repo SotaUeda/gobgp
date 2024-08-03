@@ -5,13 +5,15 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/SotaUeda/gobgp/bgptype"
 )
 
 type Config struct {
 	ConfStr  string
-	LocalAS  AutonomousSystemNumber
+	LocalAS  bgptype.AutonomousSystemNumber
 	LocalIP  net.IP
-	RemoteAS AutonomousSystemNumber
+	RemoteAS bgptype.AutonomousSystemNumber
 	RemoteIP net.IP
 	Mode     Mode
 }
@@ -73,9 +75,9 @@ func ParseConfig(s string) (*Config, error) {
 	}
 	c := &Config{
 		ConfStr:  s,
-		LocalAS:  AutonomousSystemNumber(la),
+		LocalAS:  bgptype.AutonomousSystemNumber(la),
 		LocalIP:  li,
-		RemoteAS: AutonomousSystemNumber(ra),
+		RemoteAS: bgptype.AutonomousSystemNumber(ra),
 		RemoteIP: ri,
 		Mode:     Mode(m),
 	}

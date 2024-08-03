@@ -3,36 +3,25 @@ package packets
 import (
 	"fmt"
 	"net"
+
+	"github.com/SotaUeda/gobgp/bgptype"
 )
 
 type Message interface {
+	ToMessage([]byte) error
 	ToBytes() ([]byte, error)
-	FromBytes([]byte) error
 }
 
-func BytesToMessage(b []byte) (*Message, error) {
-	hl := 19
-	if len(b) < hl {
-		return nil, fmt.Errorf(
-			"BytesからMessageに変換できませんでした。"+
-				"Bytesの長さが最小の長さより短いです。最小: %d, Bytes: %d",
-			hl, len(b),
-		)
+// Goでは、インターフェース型を返す関数で具体的な型のポインタを返すことができる
+func BytesToMessage(b []byte) (Message, error) {
+	h, hErr := Header.ToMessage(b[0:HEADER_LENGTH])
+	if hErr != nil {
+		return nil, hErr
 	}
-	h, err := Header.FromBytes(b[0:hl])
-	if err != nil {
-		return nil, fmt.Errorf(
-			"BytesからMessageに変換できませんでした。"+
-				"Headerの変換に失敗しました。%w",
-			err,
-		)
-	}
+	var m Message
 	switch h.Type {
 	case Open:
-		m := &OpenMessage{}
-		m.Header = h
-		err := m.FromBytes(b[hl:])
-		return m, err
+		m = &OpenMessage{}
 	default:
 		return nil, fmt.Errorf(
 			"BytesからMessageに変換できませんでした。"+
@@ -40,6 +29,8 @@ func BytesToMessage(b []byte) (*Message, error) {
 			h.Type,
 		)
 	}
+	mErr := m.ToMessage(b)
+	return m, mErr
 }
 
 func MessageToBytes(m *Message) ([]byte, error) {
@@ -53,6 +44,6 @@ func MessageToBytes(m *Message) ([]byte, error) {
 	return b, nil
 }
 
-func (m *OpenMessage) NewOpen(as AoutonomousSystem, ip net.IP) {
+func (m *OpenMessage) NewOpen(as bgptype.AutonomousSystemNumber, ip net.IP) {
 	m = NewOpenMessage(as, ip)
 }
