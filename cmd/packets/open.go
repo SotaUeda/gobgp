@@ -28,7 +28,7 @@ func NewOpenMessage(as bgptype.AutonomousSystemNumber, ip net.IP) *OpenMessage {
 		Version:                 bgptype.NewVersion(),
 		MyAS:                    as,
 		HoldTime:                bgptype.NewHoldTime(),
-		BGPIdentifier:           ip,
+		BGPIdentifier:           ip.To4(),
 		OptionalParameterLength: 0,
 		OptionalParameters:      []byte{},
 	}
@@ -77,7 +77,7 @@ func (m *OpenMessage) ToBytes() ([]byte, error) {
 	b[21] = byte(m.MyAS & 0xff)
 	b[22] = byte(m.HoldTime >> 8)
 	b[23] = byte(m.HoldTime & 0xff)
-	copy(b[24:28], m.BGPIdentifier)
+	copy(b[24:28], m.BGPIdentifier.To4())
 	b[28] = m.OptionalParameterLength
 	copy(b[29:], m.OptionalParameters)
 

@@ -2,12 +2,6 @@ package packets
 
 import "fmt"
 
-type MessageType uint8
-
-const (
-	Open MessageType = iota
-)
-
 const HEADER_LENGTH = 19
 
 type Header struct {
@@ -31,9 +25,37 @@ func (h *Header) ToMessage(b []byte) error {
 	}
 	// Merkerはすべて1のため無視する
 	h.length = uint16(b[16])<<8 | uint16(b[17])
-	h.Type = MessageType(b[18])
+	var err error
+	h.Type, err = BytesToMessageType(b[18])
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-// TODO: ToBytesメソッドを実装する
+func (h *Header) ToBytes() ([]byte, error) {
+	b := make([]byte, HEADER_LENGTH)
+	for i := 0; i < 16; i++ {
+		b[i] = 0xff
+	}
+	b[16] = byte(h.length >> 8)
+	b[17] = byte(h.length & 0xff)
+	b[18] = byte(h.Type)
+	return b, nil
+}
+
+type MessageType uint8
+
+const (
+	Open MessageType = iota + 1 // 1
+)
+
+func BytesToMessageType(b byte) (MessageType, error) {
+	switch b {
+	case 1:
+		return Open, nil
+	default:
+		return 0, fmt.Errorf("未知のMessageTypeです。Type: %d", b)
+	}
+}

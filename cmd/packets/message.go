@@ -14,7 +14,8 @@ type Message interface {
 
 // Goでは、インターフェース型を返す関数で具体的な型のポインタを返すことができる
 func BytesToMessage(b []byte) (Message, error) {
-	h, hErr := Header.ToMessage(b[0:HEADER_LENGTH])
+	h := &Header{}
+	hErr := h.ToMessage(b[0:HEADER_LENGTH])
 	if hErr != nil {
 		return nil, hErr
 	}
@@ -33,7 +34,7 @@ func BytesToMessage(b []byte) (Message, error) {
 	return m, mErr
 }
 
-func MessageToBytes(m *Message) ([]byte, error) {
+func MessageToBytes(m Message) ([]byte, error) {
 	b, err := m.ToBytes()
 	if err != nil {
 		return nil, fmt.Errorf(
