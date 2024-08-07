@@ -3,6 +3,8 @@ package peer
 import (
 	"context"
 	"fmt"
+
+	"github.com/SotaUeda/gobgp/packets"
 )
 
 // BFPのRFCで示されている実装方針
@@ -68,6 +70,13 @@ func (p *Peer) handleEvent(ev Event) error {
 	case CONNECT:
 		switch ev {
 		case TCP_CONNECTION_CONFIRMED:
+			if p.TCPConn == nil {
+				return fmt.Errorf("TCP Connectionが確立できていません")
+			}
+			p.TCPConn.Send(packets.NewOpenMessage(
+				p.Config.LocalAS,
+				p.Config.LocalIP,
+			))
 			p.State = OPEN_SENT
 		}
 	}

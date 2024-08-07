@@ -3,8 +3,13 @@ package peer
 import (
 	"fmt"
 	"net"
+
+	"github.com/SotaUeda/gobgp/packets"
 )
 
+// 通信に関する処理を担当する構造体です。
+// TcpConnectionを張ったり、
+// Messageのデータを送受信したりします。
 type Connection struct {
 	conn *net.TCPConn
 }
@@ -13,20 +18,40 @@ const BGP_PORT = 179 // BGPは179番ポートで固定
 
 func NewConnection(c *Config) (*Connection, error) {
 	var (
-		conn = &Connection{}
+		conn = &net.TCPConn{}
 		err  error
 	)
 	switch c.Mode {
 	case Active:
-		conn.conn, err = connectRemoteAddress(c)
-		return conn, err
+		conn, err = connectRemoteAddress(c)
 	case Passive:
-		conn.conn, err = waitRemoteAddress(c)
-		return conn, err
+		conn, err = waitRemoteAddress(c)
 	default:
 		err = fmt.Errorf("config mode is undefined")
-		return conn, err
 	}
+	if err != nil {
+		return nil, err
+	}
+	err = conn.SetWriteBuffer(1500)
+	if err != nil {
+		return nil, err
+	}
+	return &Connection{conn}, nil
+}
+
+// Writer, Readerを実装した方がよりGoらしい？
+func (c *Connection) Send(m packets.Message) error {
+	buf, err := m.ToBytes()
+	if err != nil {
+		fmt.Printf("MessageのByte変換に失敗しました: %v\n", err)
+		return err
+	}
+	_, err = c.conn.Write(buf)
+	if err != nil {
+		fmt.Printf("メッセージの送信に失敗しました: %v\n", err)
+		return err
+	}
+	return nil
 }
 
 func connectRemoteAddress(c *Config) (*net.TCPConn, error) {
