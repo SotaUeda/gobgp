@@ -35,18 +35,38 @@ func (p *Peer) Start() {
 }
 
 func (p *Peer) Next(ctx context.Context) error {
-	select {
-	case ev := <-p.EventQueue:
-		fmt.Printf("event is occured, event=%v.\n", ev.Show())
-		p.handleEvent(ev)
-		return nil
-	case <-ctx.Done():
-		fmt.Print("func next is done")
-		if p.TCPConn != nil {
-			p.TCPConn.conn.Close()
-			fmt.Print("close connection")
+	for {
+		select {
+		case ev := <-p.EventQueue:
+			fmt.Printf("event is occured, event=%v.\n", ev.Show())
+			p.handleEvent(ev)
+			return nil
+		case <-ctx.Done():
+			fmt.Print("func next is done.\n")
+			if p.TCPConn != nil {
+				p.TCPConn.conn.Close()
+				fmt.Print("close connection\n")
+			}
+			return nil
+		default:
+			if p.TCPConn != nil && p.State != CONNECT {
+				m, err := p.TCPConn.Recv()
+				if err != nil {
+					return err
+				}
+				fmt.Printf("message is received, message=%v.\n", m.Show())
+				p.handleMessage(m)
+				return nil
+			}
+			continue
 		}
-		return nil
+	}
+}
+
+func (p *Peer) handleMessage(m packets.Message) {
+	switch m.(type) {
+	case *packets.OpenMessage:
+		go func() { p.EventQueue <- BGP_OPEN }()
 	}
 }
 

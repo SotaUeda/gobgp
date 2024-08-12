@@ -10,6 +10,7 @@ import (
 type Message interface {
 	ToMessage([]byte) error
 	ToBytes() ([]byte, error)
+	Show() string
 }
 
 // Goでは、インターフェース型を返す関数で具体的な型のポインタを返すことができる

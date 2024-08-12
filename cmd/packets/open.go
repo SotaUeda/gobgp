@@ -34,6 +34,19 @@ func NewOpenMessage(as bgptype.AutonomousSystemNumber, ip net.IP) *OpenMessage {
 	}
 }
 
+func (m *OpenMessage) Show() string {
+	return fmt.Sprintf(
+		"Header: %v, Version: %d, MyAS: %d, HoldTime: %d, BGPIdentifier: %s, OptionalParameterLength: %d, OptionalParameters: %v",
+		m.Header,
+		m.Version,
+		m.MyAS,
+		m.HoldTime,
+		m.BGPIdentifier,
+		m.OptionalParameterLength,
+		m.OptionalParameters,
+	)
+}
+
 func (m *OpenMessage) ToMessage(b []byte) error {
 	if len(b) < OPEN_MESSAGE_LENGTH {
 		return fmt.Errorf(

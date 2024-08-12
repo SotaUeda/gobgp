@@ -12,6 +12,7 @@ const (
 	// 正常系しか実装しない本実装では別のEventとして扱う意味がないため、
 	// TcpConnectionConfirmedはTcpAckedも兼ねている。
 	TCP_CONNECTION_CONFIRMED
+	BGP_OPEN
 )
 
 func (ev Event) Show() string {
@@ -20,6 +21,8 @@ func (ev Event) Show() string {
 		return "Manual Start"
 	case TCP_CONNECTION_CONFIRMED:
 		return "TCP Connection Confirmed"
+	case BGP_OPEN:
+		return "BGP Open"
 	default:
 		return fmt.Sprintf("%v", ev)
 	}

@@ -10,7 +10,8 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.1 64513 127.0.0.2 active")
 	peer := NewPeer(config)
 	peer.Start()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.2 64512 127.0.0.1 passive")
 		remote_peer := NewPeer(remote_config)
@@ -20,18 +21,19 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 	// remote_peer側の処理が進むことを保証するためのwait
 	time.Sleep(1 * time.Second)
 	peer.Next(ctx)
+	peer.TCPConn.conn.Close()
 	want := CONNECT
 	if want != peer.State {
 		t.Errorf("Want: %d,  Peer State: %d", want, peer.State)
 	}
-	ctx.Done()
 }
 
 func TestPeerCanTransitionToOpenSentState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.3 64513 127.0.0.4 active")
 	peer := NewPeer(config)
 	peer.Start()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.4 64512 127.0.0.3 passive")
 		remote_peer := NewPeer(remote_config)
@@ -43,18 +45,19 @@ func TestPeerCanTransitionToOpenSentState(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	peer.Next(ctx)
 	peer.Next(ctx)
+	peer.TCPConn.conn.Close()
 	want := OPEN_SENT
 	if want != peer.State {
 		t.Errorf("Want: %d,  Peer State: %d", want, peer.State)
 	}
-	ctx.Done()
 }
 
 func TestPeerCanTransitionToOpenConfirmState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.5 64513 127.0.0.6 active")
 	peer := NewPeer(config)
 	peer.Start()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.6 64512 127.0.0.5 passive")
 		remote_peer := NewPeer(remote_config)
@@ -78,6 +81,7 @@ func TestPeerCanTransitionToOpenConfirmState(t *testing.T) {
 		}
 		time.Sleep(1 * time.Millisecond)
 	}
+	peer.TCPConn.conn.Close()
 	want := OPEN_CONFIRM
 	if want != peer.State {
 		t.Errorf("Want: %d,  Peer State: %d", want, peer.State)
