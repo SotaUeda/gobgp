@@ -30,7 +30,7 @@ func NewOpenMessage(as bgptype.AutonomousSystemNumber, ip net.IP) *OpenMessage {
 		HoldTime:                bgptype.NewHoldTime(),
 		BGPIdentifier:           ip.To4(),
 		OptionalParameterLength: 0,
-		OptionalParameters:      []byte{},
+		OptionalParameters:      nil,
 	}
 }
 
@@ -55,7 +55,7 @@ func (m *OpenMessage) ToMessage(b []byte) error {
 		)
 	}
 	h := &Header{}
-	err := h.ToMessage(b[0:HEADER_LENGTH])
+	err := h.ToHeader(b[0:HEADER_LENGTH])
 	if err != nil {
 		return err
 	}

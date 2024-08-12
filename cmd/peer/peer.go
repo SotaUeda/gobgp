@@ -93,11 +93,20 @@ func (p *Peer) handleEvent(ev Event) error {
 			if p.TCPConn == nil {
 				return fmt.Errorf("TCP Connectionが確立できていません")
 			}
-			p.TCPConn.Send(packets.NewOpenMessage(
+			err := p.TCPConn.Send(packets.NewOpenMessage(
 				p.Config.LocalAS,
 				p.Config.LocalIP,
 			))
+			if err != nil {
+				return err
+			}
 			p.State = OPEN_SENT
+		}
+	case OPEN_SENT:
+		switch ev {
+		case BGP_OPEN:
+			// TODO: Keepalive messageを送信する
+			p.State = OPEN_CONFIRM
 		}
 	}
 	return nil

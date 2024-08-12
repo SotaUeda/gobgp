@@ -48,7 +48,7 @@ func TestConvertBytesToHeaderAndHeaderToBytes(t *testing.T) {
 		t.Errorf("Error: %v", err)
 	}
 	newHeader := &Header{}
-	err = newHeader.ToMessage(b)
+	err = newHeader.ToHeader(b)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}

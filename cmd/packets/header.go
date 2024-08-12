@@ -2,6 +2,15 @@ package packets
 
 import "fmt"
 
+// BGP MessageのHeaderフォーマット
+// Marker: 16byte: すべて1。過去との互換性のために存在する。
+// Length: 2byte: Headerを含めたBGP Message全体のバイト数を表す符号なし整数値
+// Type: 1byte: BGP Messageの種類を表す。
+// 		1: OPEN
+// 		2: UPDATE
+// 		3: NOTIFICATION
+// 		4: KEEPALIVE
+
 const HEADER_LENGTH = 19
 
 type Header struct {
@@ -16,7 +25,7 @@ func NewHeader(length uint16, t MessageType) *Header {
 	}
 }
 
-func (h *Header) ToMessage(b []byte) error {
+func (h *Header) ToHeader(b []byte) error {
 	if len(b) < HEADER_LENGTH {
 		return fmt.Errorf(
 			"Headerに変換できませんでした。Bytesの長さが最小の長さより短いです。最小: 19, Bytes: %d",

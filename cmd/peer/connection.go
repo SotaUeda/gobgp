@@ -16,6 +16,7 @@ type Connection struct {
 }
 
 const BGP_PORT = 179 // BGPは179番ポートで固定
+// const BGP_PORT = 8080 // テスト用に8080に変更
 
 func NewConnection(c *Config) (*Connection, error) {
 	var (
@@ -99,11 +100,9 @@ func (c *Connection) Send(m packets.Message) error {
 // ないしは何も受信していない場合はnilを返す。
 // この関数は非同期で呼び出されることを想定している。
 func (c *Connection) Recv() (packets.Message, error) {
-	if c.buf == nil {
-		c.buf = make([]byte, 4096)
-	}
+	tempBuf := make([]byte, 4096)
 	for {
-		n, err := c.conn.Read(c.buf)
+		n, err := c.conn.Read(tempBuf)
 		if err != nil {
 			fmt.Printf("メッセージの受信に失敗しました: %v\n", err)
 			return nil, err
@@ -111,6 +110,7 @@ func (c *Connection) Recv() (packets.Message, error) {
 		if n == 0 {
 			continue
 		}
+		c.buf = append(c.buf, tempBuf[:n]...)
 		b, err := c.splitMsgSep()
 		if err != nil {
 			fmt.Printf("MessageのByte切り出しに失敗しました: %v\n", err)
@@ -121,7 +121,7 @@ func (c *Connection) Recv() (packets.Message, error) {
 		}
 		m, err := packets.BytesToMessage(b)
 		if err != nil {
-			fmt.Printf("MessageのByte変換に失敗しました: %v\n", err)
+			fmt.Printf("ByteのMessage変換に失敗しました: %v\n", err)
 			return nil, err
 		}
 		return m, nil
@@ -137,8 +137,9 @@ func (c *Connection) splitMsgSep() ([]byte, error) {
 	if len(c.buf) < idx {
 		return nil, nil // まだMessageのSeparateorを表すデータがbufferに入っていない
 	}
+	b := c.buf[:idx]
 	c.buf = c.buf[idx:]
-	return c.buf[:idx], nil
+	return b, nil
 }
 
 // *Connection.bufのうちどこまでが1つのbgp messageを表すbyteであるかを返す
