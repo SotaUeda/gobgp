@@ -68,7 +68,7 @@ func (p *Peer) handleMessage(m packets.Message) {
 	case *packets.OpenMessage:
 		go func() { p.EventQueue <- BGP_OPEN }()
 	case *packets.KeepaliveMessage:
-		go func() { p.EventQueue <- KEEPALIVE }()
+		go func() { p.EventQueue <- KEEPALIVE_MSG }()
 	}
 }
 
@@ -86,8 +86,8 @@ func (p *Peer) handleEvent(ev Event) error {
 			if p.TCPConn == nil {
 				return fmt.Errorf("TCP Connectionが確立できませんでした")
 			}
-			go func() { p.EventQueue <- TCP_CONNECTION_CONFIRMED }()
 			p.State = CONNECT
+			go func() { p.EventQueue <- TCP_CONNECTION_CONFIRMED }()
 		}
 	case CONNECT:
 		switch ev {
@@ -115,6 +115,12 @@ func (p *Peer) handleEvent(ev Event) error {
 				return err
 			}
 			p.State = OPEN_CONFIRM
+		}
+	case OPEN_CONFIRM:
+		switch ev {
+		case KEEPALIVE_MSG:
+			p.State = ESTABLISHED
+			go func() { p.EventQueue <- ESTABLISHED_STATE_EVENT }()
 		}
 	}
 	return nil

@@ -13,7 +13,11 @@ const (
 	// TcpConnectionConfirmedはTcpAckedも兼ねている。
 	TCP_CONNECTION_CONFIRMED
 	BGP_OPEN
-	KEEPALIVE
+	// MSGはMessageの省略形
+	KEEPALIVE_MSG
+	// StateがEstablishedに遷移したことを表す
+	// 存在する方が実装が楽なため追加したオリジナルイベント
+	ESTABLISHED_STATE_EVENT
 )
 
 func (ev Event) Show() string {
@@ -24,6 +28,10 @@ func (ev Event) Show() string {
 		return "TCP Connection Confirmed"
 	case BGP_OPEN:
 		return "BGP Open"
+	case KEEPALIVE_MSG:
+		return "Recieved Keepalive Message"
+	case ESTABLISHED_STATE_EVENT:
+		return "Established"
 	default:
 		return fmt.Sprintf("%v", ev)
 	}
