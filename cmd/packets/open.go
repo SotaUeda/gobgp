@@ -59,6 +59,9 @@ func (m *OpenMessage) ToMessage(b []byte) error {
 	if err != nil {
 		return err
 	}
+	if h.Type != Open {
+		return fmt.Errorf("TypeがOpenではありません。Type: %d", h.Type)
+	}
 	m.Header = h
 	m.Version = bgptype.Version(b[19])
 	m.MyAS = bgptype.AutonomousSystemNumber(

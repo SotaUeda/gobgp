@@ -13,6 +13,7 @@ const (
 	// TcpConnectionConfirmedはTcpAckedも兼ねている。
 	TCP_CONNECTION_CONFIRMED
 	BGP_OPEN
+	KEEPALIVE
 )
 
 func (ev Event) Show() string {

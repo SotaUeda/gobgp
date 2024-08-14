@@ -67,6 +67,8 @@ func (p *Peer) handleMessage(m packets.Message) {
 	switch m.(type) {
 	case *packets.OpenMessage:
 		go func() { p.EventQueue <- BGP_OPEN }()
+	case *packets.KeepaliveMessage:
+		go func() { p.EventQueue <- KEEPALIVE }()
 	}
 }
 
@@ -105,7 +107,13 @@ func (p *Peer) handleEvent(ev Event) error {
 	case OPEN_SENT:
 		switch ev {
 		case BGP_OPEN:
-			// TODO: Keepalive messageを送信する
+			if p.TCPConn == nil {
+				return fmt.Errorf("TCP Connectionが確立できていません")
+			}
+			err := p.TCPConn.Send(packets.NewKeepaliveMessage())
+			if err != nil {
+				return err
+			}
 			p.State = OPEN_CONFIRM
 		}
 	}

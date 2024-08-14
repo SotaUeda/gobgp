@@ -21,6 +21,8 @@ func BytesToMessage(b []byte) (Message, error) {
 	switch h.Type {
 	case Open:
 		m = &OpenMessage{}
+	case Keepalive:
+		m = &KeepaliveMessage{}
 	default:
 		return nil, fmt.Errorf(
 			"BytesからMessageに変換できませんでした。"+

@@ -57,13 +57,18 @@ func (h *Header) ToBytes() ([]byte, error) {
 type MessageType uint8
 
 const (
-	Open MessageType = iota + 1 // 1
+	Open      MessageType = iota + 1 // 1
+	_                                // 2
+	_                                // 3
+	Keepalive                        // 4
 )
 
 func BytesToMessageType(b byte) (MessageType, error) {
 	switch b {
 	case 1:
 		return Open, nil
+	case 4:
+		return Keepalive, nil
 	default:
 		return 0, fmt.Errorf("未知のMessageTypeです。Type: %d", b)
 	}
