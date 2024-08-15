@@ -58,7 +58,6 @@ func (p *Peer) Next(ctx context.Context) error {
 				p.handleMessage(m)
 				return nil
 			}
-			continue
 		}
 	}
 }

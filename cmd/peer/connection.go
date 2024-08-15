@@ -98,7 +98,6 @@ func (c *Connection) Send(m packets.Message) error {
 // 最古に受信したMessageを返す。
 // bgp messageのデータの受信中（半端に受信している）、
 // ないしは何も受信していない場合はnilを返す。
-// この関数は非同期で呼び出されることを想定している。
 func (c *Connection) Recv() (packets.Message, error) {
 	tempBuf := make([]byte, 4096)
 	for {
