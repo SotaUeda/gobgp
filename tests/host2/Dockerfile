@@ -4,4 +4,5 @@ WORKDIR /gobgp
 COPY ../cmd/. .
 RUN go mod tidy
 RUN go build -o ./gobgp
-CMD ["./gobgp", "64513 10.200.100.3 65412 10.200.100.2 passive"]
+CMD ["./gobgp", \
+    "64513 10.200.100.3 65412 10.200.100.2 passive 10.100.220.0/24"]

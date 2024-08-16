@@ -57,3 +57,34 @@ func TestConvertBytesToHeaderAndHeaderToBytes(t *testing.T) {
 		t.Errorf("Want: %v, Got: %v", header, newHeader)
 	}
 }
+
+// UpdateMessageのToMessageメソッドとToBytesメソッドをテストする
+func TestConvertBytesToUpdateMessageAndUpdateMessageToBytes(t *testing.T) {
+	someAs := bgptype.AutonomousSystemNumber(64513)
+	// someIP := net.ParseIP("10.0.100.3").To4()
+
+	localAs := bgptype.AutonomousSystemNumber(64514)
+	localIP := net.ParseIP("10.200.100.3").To4()
+
+	updateMsgPas := []*bgptype.PathAttribute{
+		{
+			Origin:  bgptype.IGP,
+			AsPath:  bgptype.NewAsSequence(someAs, localAs),
+			NextHop: localIP,
+		},
+	}
+
+	rt := &net.IPNet{IP: net.ParseIP("10.100.220.0"), Mask: net.CIDRMask(24, 32)}
+	updateMsg := NewUpdateMessage(
+		updateMsgPas,
+		[]*net.IPNet{rt},
+		[]*net.IPNet{},
+	)
+	updateMsgByte, err := updateMsg.ToBytes()
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	updateMsg2 := &UpdateMessage{}
+	updateMsg2.ToMessage(updateMsgByte)
+	// TODO: フィールドを比較
+}

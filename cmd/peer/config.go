@@ -16,6 +16,7 @@ type Config struct {
 	RemoteAS bgptype.AutonomousSystemNumber
 	RemoteIP net.IP
 	Mode     Mode
+	Networks []*net.IPNet
 }
 
 type Mode int
@@ -73,6 +74,19 @@ func ParseConfig(s string) (*Config, error) {
 			config[4], s,
 		)
 	}
+	nws := []*net.IPNet{}
+	if len(config) >= 6 {
+		for num, nw := range config[5:] {
+			_, n, err := net.ParseCIDR(nw)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot parse %vth part of config, %v as network and config is %v",
+					num+5, nw, s,
+				)
+			}
+			nws = append(nws, n)
+		}
+	}
 	c := &Config{
 		ConfStr:  s,
 		LocalAS:  bgptype.AutonomousSystemNumber(la),
@@ -80,6 +94,7 @@ func ParseConfig(s string) (*Config, error) {
 		RemoteAS: bgptype.AutonomousSystemNumber(ra),
 		RemoteIP: ri,
 		Mode:     Mode(m),
+		Networks: nws,
 	}
 	return c, nil
 }
