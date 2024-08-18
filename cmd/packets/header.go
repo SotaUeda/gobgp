@@ -58,7 +58,7 @@ type MessageType uint8
 
 const (
 	Open      MessageType = iota + 1 // 1
-	_                                // 2
+	Update                           // 2
 	_                                // 3
 	Keepalive                        // 4
 )
@@ -67,6 +67,8 @@ func BytesToMessageType(b byte) (MessageType, error) {
 	switch b {
 	case 1:
 		return Open, nil
+	case 2:
+		return Update, nil
 	case 4:
 		return Keepalive, nil
 	default:

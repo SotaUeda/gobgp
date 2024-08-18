@@ -1,13 +1,14 @@
 package packets
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/SotaUeda/gobgp/bgptype"
 )
 
 type UpdateMessage struct {
-	header                              Header
+	Header                              Header
 	WithdrawnRoutes                     []*net.IPNet
 	withdrawnRouteLen                   uint16 // ルート数ではなく、bytesにしたときのオクテット数
 	PathAttributes                      []*bgptype.PathAttribute
@@ -24,6 +25,18 @@ func NewUpdateMessage(
 	wr []*net.IPNet) *UpdateMessage {
 	//TODO
 	return &UpdateMessage{}
+}
+
+func (u *UpdateMessage) Show() string {
+	return fmt.Sprintf(
+		"Header: %v, WithdrawnRoutes: %v, WithdrawnRoutesLen: %v, PathAttributes: %v, pathAttributeLen: %v, NLRI: %v",
+		u.Header,
+		u.WithdrawnRoutes,
+		u.withdrawnRouteLen,
+		u.PathAttributes,
+		u.pathAttributeLen,
+		u.NetworkLayerReachabilityInformation,
+	)
 }
 
 func (u *UpdateMessage) ToBytes() ([]byte, error) {

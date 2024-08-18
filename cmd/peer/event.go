@@ -15,6 +15,7 @@ const (
 	BGP_OPEN
 	// MSGはMessageの省略形
 	KEEPALIVE_MSG
+	UPDATE_MSG
 	// StateがEstablishedに遷移したことを表す
 	// 存在する方が実装が楽なため追加したオリジナルイベント
 	ESTABLISHED_STATE_EVENT

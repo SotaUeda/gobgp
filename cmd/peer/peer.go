@@ -68,6 +68,8 @@ func (p *Peer) handleMessage(m packets.Message) {
 		go func() { p.EventQueue <- BGP_OPEN }()
 	case *packets.KeepaliveMessage:
 		go func() { p.EventQueue <- KEEPALIVE_MSG }()
+	case *packets.UpdateMessage:
+		go func() { p.EventQueue <- UPDATE_MSG }()
 	}
 }
 
