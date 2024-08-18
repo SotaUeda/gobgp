@@ -69,7 +69,7 @@ func TestConvertBytesToUpdateMessageAndUpdateMessageToBytes(t *testing.T) {
 	updateMsgPas := []*bgptype.PathAttribute{
 		{
 			Origin:  bgptype.IGP,
-			AsPath:  bgptype.NewAsSequence(someAs, localAs),
+			AsPath:  &bgptype.AsPath{someAs, localAs},
 			NextHop: localIP,
 		},
 	}
