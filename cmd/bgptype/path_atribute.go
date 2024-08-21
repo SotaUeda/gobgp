@@ -32,7 +32,7 @@ const (
 type AsPath interface {
 	BytesLen() uint16
 	Add() error
-	GetAs() ([]AutonomousSystemNumber, error)
+	Get() ([]AutonomousSystemNumber, error)
 }
 
 type AsSequence []AutonomousSystemNumber
@@ -48,7 +48,7 @@ func (seq *AsSequence) Add(as AutonomousSystemNumber) error {
 	return nil
 }
 
-func (seq *AsSequence) GetAs() []AutonomousSystemNumber {
+func (seq *AsSequence) Get() []AutonomousSystemNumber {
 	return *seq
 }
 
@@ -68,7 +68,7 @@ func (set *AsSet) Add(as AutonomousSystemNumber) error {
 	return nil
 }
 
-func (set *AsSet) GetAs() []AutonomousSystemNumber {
+func (set *AsSet) Get() []AutonomousSystemNumber {
 	keys := make([]AutonomousSystemNumber, 0, len(*set))
 	for key := range *set {
 		keys = append(keys, key)
