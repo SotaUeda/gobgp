@@ -76,9 +76,50 @@ func (u *UpdateMessage) Show() string {
 	)
 }
 
+// UpdateMassageを[]byteに変換する
 func (u *UpdateMessage) ToBytes() ([]byte, error) {
-	//TODO
-	return nil, nil
+	b := make([]byte, 0)
+	// header
+	h, err := u.Header.ToBytes()
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, h...)
+	// withdrawn_routes_length
+	wrLen := make([]byte, 2)
+	wrLen[0] = byte(u.withdrawnRouteLen >> 8) // 8ビット右シフト
+	wrLen[1] = byte(u.withdrawnRouteLen)
+	b = append(b, wrLen...)
+	// withdrawn_routes
+	for _, wr := range u.WithdrawnRoutes {
+		wrBytes, err := IPNetToBytes(wr)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, wrBytes...)
+	}
+	// path_attribute_length
+	paLen := make([]byte, 2)
+	paLen[0] = byte(u.pathAttributeLen >> 8)
+	paLen[1] = byte(u.pathAttributeLen)
+	b = append(b, paLen...)
+	// path_attributes
+	for _, pa := range u.PathAttributes {
+		paBytes, err := bgptype.PathAttributeToBytes(pa)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, paBytes...)
+	}
+	// NLRI
+	for _, nlri := range u.NetworkLayerReachabilityInformation {
+		nlriBytes, err := IPNetToBytes(nlri)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, nlriBytes...)
+	}
+	return b, nil
 }
 
 func (u *UpdateMessage) ToMessage(b []byte) error {
@@ -109,4 +150,34 @@ func NetByteLen(n *net.IPNet) (uint16, error) {
 	default:
 		return 0, fmt.Errorf("invalid prefix length")
 	}
+}
+
+// net.IPNetを[]byteに変換する
+// WithdrawnRoutes, NLRIのバイト列表現はPrefix長とネットワークアドレスの組み合わせ
+// {Prefix長, ネットワークアドレス}
+// 例:
+//
+//	192.168.0.0/16 => {16, 192, 168}
+//
+// TODO: テスト
+func IPNetToBytes(n *net.IPNet) ([]byte, error) {
+	// IPNetのIPはIPv4のみをサポート
+	ip := n.IP.To4()
+	if ip == nil {
+		return nil, fmt.Errorf("invalid ip address")
+	}
+	// プレフィックス長を取得
+	ones, _ := n.Mask.Size()
+	// プレフィックス長のバイト表現
+	prefixLen := byte(ones)
+	// ネットワークアドレスのバイト表現
+	// 4オクテットのIPアドレスから、ネットワークアドレス部分のみを取得
+	byteNw := make([]byte, 0)
+	for i := 0; i < 4; i++ {
+		if n.Mask[i] == 0 {
+			break
+		}
+		byteNw = append(byteNw, ip[i]&n.Mask[i])
+	}
+	return append([]byte{prefixLen}, byteNw...), nil
 }
