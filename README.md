@@ -7,7 +7,7 @@
 以下の段階に分けてイベント駆動ステートマシンとしてBGPを実装していく。
 なお、正常系のみ実装する。
 1. "Connect"まで遷移する実装
-2. "Established"まで遷移する実装    // TODO
+2. "Established"まで遷移する実装 
 3. "Update Message"を交換する実装   // TODO
 
 ## BGPのイベント駆動ステートマシンに登場するEvent   (本書から抜粋)
