@@ -7,6 +7,7 @@ import (
 	"github.com/SotaUeda/gobgp/bgptype"
 )
 
+// TODO: Routeは*net.IPNetを使用せず、自作の型を使用したほうが良いかもしれない
 type UpdateMessage struct {
 	Header                              Header
 	WithdrawnRoutes                     []*net.IPNet
@@ -25,10 +26,7 @@ func NewUpdateMessage(
 	wr []*net.IPNet) (*UpdateMessage, error) {
 	paLen := uint16(0)
 	for _, pa := range pas {
-		l, err := pa.BytesLen()
-		if err != nil {
-			return nil, err
-		}
+		l := pa.BytesLen()
 		paLen += l
 	}
 	nlriLen := uint16(0)
@@ -105,10 +103,7 @@ func (u *UpdateMessage) ToBytes() ([]byte, error) {
 	b = append(b, paLen...)
 	// path_attributes
 	for _, pa := range u.PathAttributes {
-		paBytes, err := bgptype.PathAttributeToBytes(pa)
-		if err != nil {
-			return nil, err
-		}
+		paBytes := pa.ToBytes()
 		b = append(b, paBytes...)
 	}
 	// NLRI
@@ -123,7 +118,44 @@ func (u *UpdateMessage) ToBytes() ([]byte, error) {
 }
 
 func (u *UpdateMessage) ToMessage(b []byte) error {
-	//TODO
+	// header
+	h := Header{}
+	if err := h.ToHeader(b[0:HEADER_LENGTH]); err != nil {
+		return err
+	}
+	// WITHDRAWN ROUTES LENGTH
+	wrLen := uint16(b[19])<<8 | uint16(b[20])
+	// WITHDRAWN ROUTES
+	wrEnd := 21 + wrLen
+	wrBytes := b[21:wrEnd]
+	wrs, err := BytesToIPNets(wrBytes)
+	if err != nil {
+		return err
+	}
+	// PATH ATTRIBUTE LENGTH
+	paLen := uint16(b[wrEnd])<<8 | uint16(b[wrEnd+1])
+	// PATH ATTRIBUTES
+	paStart := wrEnd + 2
+	paEnd := paStart + paLen
+	paBytes := b[paStart:paEnd]
+	pas, err := bgptype.BytesToPathAttributes(paBytes)
+	if err != nil {
+		return err
+	}
+	// NLRI
+	nlriStart := paEnd
+	nlriBytes := b[nlriStart:]
+	nlris, err := BytesToIPNets(nlriBytes)
+	if err != nil {
+		return err
+	}
+
+	u.Header = h
+	u.WithdrawnRoutes = wrs
+	u.withdrawnRouteLen = wrLen
+	u.PathAttributes = pas
+	u.pathAttributeLen = paLen
+	u.NetworkLayerReachabilityInformation = nlris
 	return nil
 }
 
@@ -180,4 +212,29 @@ func IPNetToBytes(n *net.IPNet) ([]byte, error) {
 		byteNw = append(byteNw, ip[i]&n.Mask[i])
 	}
 	return append([]byte{prefixLen}, byteNw...), nil
+}
+
+// []byteを[]*net.IPNetに変換する
+// 可変長のバイト列から、複数のプレフィックス長とネットワークアドレスを取得する
+func BytesToIPNets(b []byte) ([]*net.IPNet, error) {
+	nets := make([]*net.IPNet, 0)
+	for i := 0; i < len(b); {
+		// プレフィックス長
+		ones := int(b[i])
+		// プレフィックス長のバイト数
+		prefixLenBytes := (ones + 7) / 8
+		// ネットワークアドレス
+		nw := make([]byte, 4)
+		for j := 0; j < prefixLenBytes; j++ {
+			nw[j] = b[i+j+1]
+		}
+		// プレフィックス長とネットワークアドレスから、net.IPNetを作成
+		_, ipNet, err := net.ParseCIDR(fmt.Sprintf("%d.%d.%d.%d/%d", nw[0], nw[1], nw[2], nw[3], ones))
+		if err != nil {
+			return nil, err
+		}
+		nets = append(nets, ipNet)
+		i += prefixLenBytes + 1
+	}
+	return nets, nil
 }

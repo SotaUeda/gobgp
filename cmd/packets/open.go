@@ -55,8 +55,7 @@ func (m *OpenMessage) ToMessage(b []byte) error {
 		)
 	}
 	h := &Header{}
-	err := h.ToHeader(b[0:HEADER_LENGTH])
-	if err != nil {
+	if err := h.ToHeader(b[0:HEADER_LENGTH]); err != nil {
 		return err
 	}
 	if h.Type != Open {
