@@ -75,19 +75,30 @@ func TestConvertBytesToUpdateMessageAndUpdateMessageToBytes(t *testing.T) {
 	}
 
 	rt := &net.IPNet{IP: net.ParseIP("10.100.220.0"), Mask: net.CIDRMask(24, 32)}
-	updateMsg, err := NewUpdateMessage(
+	var updateMsg *UpdateMessage
+	if u, err := NewUpdateMessage(
 		updateMsgPas,
 		[]*net.IPNet{rt},
 		[]*net.IPNet{},
-	)
-	if err != nil {
+	); err != nil {
 		t.Errorf("Error: %v", err)
+	} else {
+		updateMsg = u
 	}
-	updateMsgByte, err := updateMsg.ToBytes()
-	if err != nil {
+	var updateMsgByte []byte
+	if b, err := updateMsg.ToBytes(); err != nil {
 		t.Errorf("Error: %v", err)
+	} else {
+		updateMsgByte = b
 	}
 	updateMsg2 := &UpdateMessage{}
-	updateMsg2.ToMessage(updateMsgByte)
-	// TODO: フィールドを比較
+	if err := updateMsg2.ToMessage(updateMsgByte); err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	// フィールドを比較
+	want := updateMsg.Show()
+	get := updateMsg2.Show()
+	if want != get {
+		t.Errorf("Want: %v, \nGot: %v", want, get)
+	}
 }

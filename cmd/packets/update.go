@@ -63,12 +63,16 @@ func NewUpdateMessage(
 }
 
 func (u *UpdateMessage) Show() string {
+	var pas string
+	for _, pa := range u.PathAttributes {
+		pas += fmt.Sprintf("%v", pa.ToBytes())
+	}
 	return fmt.Sprintf(
 		"Header: %v, WithdrawnRoutes: %v, WithdrawnRoutesLen: %v, PathAttributes: %v, pathAttributeLen: %v, NLRI: %v",
 		u.Header,
 		u.WithdrawnRoutes,
 		u.withdrawnRouteLen,
-		u.PathAttributes,
+		pas,
 		u.pathAttributeLen,
 		u.NetworkLayerReachabilityInformation,
 	)

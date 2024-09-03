@@ -38,18 +38,18 @@ const (
 )
 
 func (o *Origin) BytesLen() uint16 {
-	return 1
+	return 4
 }
 
 func (o *Origin) ToBytes() []byte {
 	attF := byte(0b01000000)
 	attTC := byte(1)
-	attL := []byte{byte(0), byte(1)}
-	attV := []byte{byte(*o)}
+	attL := byte(1)
+	attV := byte(*o)
 	bytes := make([]byte, 0)
-	bytes = append(bytes, attF, attTC)
-	bytes = append(bytes, attL...)
-	bytes = append(bytes, attV...)
+	bytes = append(
+		bytes, attF, attTC, attL, attV,
+	)
 	return bytes
 }
 
@@ -97,7 +97,12 @@ type AsSequence []AutonomousSystemNumber
 func (seq *AsSequence) BytesLen() uint16 {
 	asBytesLen := 2 * len(*seq)
 	// Segment Typeを表すoctet +  Path Segment Lengthを表すoctet + ASのbytesの値
-	return 1 + 1 + uint16(asBytesLen)
+	asBytesLen += 2
+	if asBytesLen < 256 {
+		return uint16(asBytesLen + 3)
+	} else {
+		return uint16(asBytesLen + 4)
+	}
 }
 
 // Segment Type, Path Segment Length, Path Segment Value
@@ -105,10 +110,11 @@ func (seq *AsSequence) BytesLen() uint16 {
 func (seq *AsSequence) ToBytes() []byte {
 	attF := byte(0b01000000)
 	attTC := byte(2)
-	bLen := seq.BytesLen()
+	bLen := len(*seq) * 2
+	bLen += 2 // Segment TypeとSegment Lengthの2オクテット
 	var attL []byte
 	if bLen < 256 {
-		attL = []byte{byte(0), byte(bLen)}
+		attL = []byte{byte(bLen)}
 	} else {
 		attF += 0b00010000 // Attribute Lengthがtwo octetsなので4bit目を1にする
 		attL = []byte{byte(bLen >> 8), byte(bLen)}
@@ -173,18 +179,24 @@ type AsSet map[AutonomousSystemNumber]struct{}
 func (set *AsSet) BytesLen() uint16 {
 	asBytesLen := 2 * len(*set)
 	// Segment Typeを表すoctet +  Path Segment Lengthを表すoctet + ASのbytesの値
-	return 1 + 1 + uint16(asBytesLen)
+	asBytesLen += 2
+	if asBytesLen < 256 {
+		return uint16(asBytesLen + 3)
+	} else {
+		return uint16(asBytesLen + 4)
+	}
 }
 
 // Segment Type, Path Segment Length, Path Segment Value
 // 3つから構成される
 func (set *AsSet) ToBytes() []byte {
 	attF := byte(0b01000000)
-	attTC := byte(2)
-	bLen := set.BytesLen()
+	attTC := byte(1)
+	bLen := 2 * len(*set)
+	bLen += 2 // Segment TypeとSegment Lengthの2オクテット
 	var attL []byte
 	if bLen < 256 {
-		attL = []byte{byte(0), byte(bLen)}
+		attL = []byte{byte(bLen)}
 	} else {
 		attF += 0b00010000 // Attribute Lengthがtwo octetsなので4bit目を1にする
 		attL = []byte{byte(bLen >> 8), byte(bLen)}
@@ -253,17 +265,16 @@ func (set *AsSet) Get() []AutonomousSystemNumber {
 type NextHop net.IP
 
 func (n *NextHop) BytesLen() uint16 {
-	return 4
+	return 7
 }
 
 func (n *NextHop) ToBytes() []byte {
 	attF := byte(0b01000000)
 	attTC := byte(3)
-	attL := []byte{byte(0), byte(4)}
+	attL := byte(4)
 	attV := net.IP(*n).To4()
 	bytes := make([]byte, 0)
-	bytes = append(bytes, attF, attTC)
-	bytes = append(bytes, attL...)
+	bytes = append(bytes, attF, attTC, attL)
 	bytes = append(bytes, attV...)
 	return bytes
 }
