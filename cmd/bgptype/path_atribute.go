@@ -89,7 +89,20 @@ type AsPath interface {
 	ToBytes() []byte
 	ToPA([]byte) error
 	Add(AutonomousSystemNumber) error
-	Get() ([]AutonomousSystemNumber, error)
+	Get() []AutonomousSystemNumber
+}
+
+func NewAsPath(isSeq bool, as ...AutonomousSystemNumber) AsPath {
+	var ap AsPath
+	if isSeq {
+		ap = new(AsSequence)
+	} else {
+		ap = new(AsSet)
+	}
+	for _, a := range as {
+		ap.Add(a)
+	}
+	return ap
 }
 
 type AsSequence []AutonomousSystemNumber
