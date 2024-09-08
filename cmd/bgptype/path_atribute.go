@@ -90,6 +90,7 @@ type AsPath interface {
 	ToPA([]byte) error
 	Add(AutonomousSystemNumber) error
 	Get() []AutonomousSystemNumber
+	Contains(AutonomousSystemNumber) bool
 }
 
 func NewAsPath(isSeq bool, as ...AutonomousSystemNumber) AsPath {
@@ -187,6 +188,15 @@ func (seq *AsSequence) Get() []AutonomousSystemNumber {
 	return *seq
 }
 
+func (seq *AsSequence) Contains(as AutonomousSystemNumber) bool {
+	for _, a := range *seq {
+		if a == as {
+			return true
+		}
+	}
+	return false
+}
+
 type AsSet map[AutonomousSystemNumber]struct{}
 
 func (set *AsSet) BytesLen() uint16 {
@@ -273,6 +283,11 @@ func (set *AsSet) Get() []AutonomousSystemNumber {
 		keys = append(keys, key)
 	}
 	return keys
+}
+
+func (set *AsSet) Contains(as AutonomousSystemNumber) bool {
+	_, exists := (*set)[as]
+	return exists
 }
 
 type NextHop net.IP

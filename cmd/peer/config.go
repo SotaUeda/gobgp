@@ -46,7 +46,7 @@ func ParseConfig(s string) (*Config, error) {
 			config[0], s,
 		)
 	}
-	li := net.ParseIP(config[1])
+	li := net.ParseIP(config[1]).To4()
 	if li == nil {
 		return nil, fmt.Errorf(
 			"cannot parse 2nd part of config, %v, as as-number and config is %v",
@@ -60,7 +60,7 @@ func ParseConfig(s string) (*Config, error) {
 			config[2], s,
 		)
 	}
-	ri := net.ParseIP(config[3])
+	ri := net.ParseIP(config[3]).To4()
 	if ri == nil {
 		return nil, fmt.Errorf(
 			"cannot parse 4th part of config, %v, as as-number and config is %v",
