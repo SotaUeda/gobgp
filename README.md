@@ -2,6 +2,7 @@
 "作って学ぶルーティングプロトコル　RustでBGPを実装"を参考に、Go言語でBGPを実装していく。
 - https://nextpublishing.jp/book/15905.html
 - https://github.com/Miyoshi-Ryota/how-to-create-bgp
+- https://github.com/Miyoshi-Ryota/mrbgpdv2
 
 ## 実装の段階
 以下の段階に分けてイベント駆動ステートマシンとしてBGPを実装していく。

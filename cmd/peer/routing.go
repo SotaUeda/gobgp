@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/SotaUeda/gobgp/bgptype"
+	"github.com/SotaUeda/gobgp/packets"
 	"github.com/vishvananda/netlink"
 )
 
@@ -80,10 +81,10 @@ func (re *RibEntry) AddPathAttributes(pas ...bgptype.PathAttribute) {
 	re.pathAttributes = append(re.pathAttributes, pas...)
 }
 
-func (re *RibEntry) GetPathAttributes() []bgptype.PathAttribute {
+func (re *RibEntry) GetPathAttributes() *[]bgptype.PathAttribute {
 	re.mu.Lock()
 	defer re.mu.Unlock()
-	return re.pathAttributes
+	return &re.pathAttributes
 }
 
 func (re *RibEntry) containAS(as bgptype.AutonomousSystemNumber) bool {
@@ -159,6 +160,55 @@ func (aro *AdjRibOut) InstallFromLocRib(locRib *LocRib, config *Config) {
 		// ここでAdjRibOutにルートをインストールする
 		aro.Insert(rt)
 	}
+}
+
+// AdjRibOutからUpdateMessageを生成する。
+// PathAttributeごとにUpdateMessageが分かれるため
+// []*UpdateMessageの戻り値にしている。
+func (aro *AdjRibOut) ToUpdateMessages(
+	lIP net.IP,
+	lAS bgptype.AutonomousSystemNumber,
+) ([]*packets.UpdateMessage, error) {
+	// PathAttributeをKeyに、[]net.IPNetをValueに持つmapを使って、
+	// 同じPathAttributeのNLRIは同じ[]net.IPNetにまとめる。
+	// ここで、同じPathAttributeとされた経路は1つのUpdateMessageにまとめる。
+	// GoではmapのKeyにスライスを使うことができないため、
+	// []PathAttributeのポインタをKeyにする。
+	maps := make(map[*[]bgptype.PathAttribute][]*net.IPNet)
+	for _, ent := range aro.Rib.Routes() {
+		pas := ent.GetPathAttributes()
+		if routes, ok := maps[pas]; ok {
+			maps[pas] = append(routes, ent.NwAddr)
+		} else {
+			maps[pas] = []*net.IPNet{ent.NwAddr}
+		}
+	}
+
+	ums := []*packets.UpdateMessage{}
+	for pas, routes := range maps {
+		// PathAttributeの2つを変更する。
+		// NextHopはLocalIPに変更
+		// ASPathにはLocalASを追加
+		for _, pa := range *pas {
+			switch t := pa.(type) {
+			case *bgptype.NextHop:
+				*t = bgptype.NextHop([]byte(lIP.To4()))
+			case *bgptype.AsSequence:
+				t.Add(lAS)
+			}
+		}
+		um, err := packets.NewUpdateMessage(
+			*pas,
+			routes,
+			[]*net.IPNet{},
+		)
+		if err != nil {
+			return nil, err
+		}
+		ums = append(ums, um)
+	}
+
+	return ums, nil
 }
 
 func (rib *LocRib) LookupRoutingTable(dst *net.IPNet) ([]*net.IPNet, error) {

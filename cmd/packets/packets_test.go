@@ -64,20 +64,21 @@ func TestConvertBytesToUpdateMessageAndUpdateMessageToBytes(t *testing.T) {
 	// someIP := net.ParseIP("10.0.100.3").To4()
 
 	localAs := bgptype.AutonomousSystemNumber(64514)
-	localIP := bgptype.NextHop(net.ParseIP("10.200.100.3").To4())
+	localIP := net.ParseIP("10.200.100.3").To4()
 
 	originIGP := bgptype.IGP
+	nh := bgptype.NextHop(localIP)
 
-	updateMsgPas := []bgptype.PathAttribute{
+	updateMsgPAs := []bgptype.PathAttribute{
 		&originIGP,
 		bgptype.NewAsPath(true, someAs, localAs),
-		&localIP,
+		&nh,
 	}
 
 	rt := &net.IPNet{IP: net.ParseIP("10.100.220.0"), Mask: net.CIDRMask(24, 32)}
 	var updateMsg *UpdateMessage
 	if u, err := NewUpdateMessage(
-		updateMsgPas,
+		updateMsgPAs,
 		[]*net.IPNet{rt},
 		[]*net.IPNet{},
 	); err != nil {

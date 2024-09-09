@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SotaUeda/gobgp/bgptype"
+	"github.com/SotaUeda/gobgp/packets"
 )
 
 // LocRibのLookupRoutingTableメソッドが正しく動作することを確認するテスト
@@ -79,7 +80,7 @@ func diffAdjRibOut(a, e *AdjRibOut) bool {
 	}
 	var aps, eps string
 	for are, ast := range a.Rib.entries {
-		for _, pa := range are.GetPathAttributes() {
+		for _, pa := range *are.GetPathAttributes() {
 			aps += fmt.Sprintf("%v", pa.ToBytes())
 		}
 		for ere, est := range e.Rib.entries {
@@ -89,7 +90,7 @@ func diffAdjRibOut(a, e *AdjRibOut) bool {
 			if ast != est {
 				return false
 			}
-			for _, pa := range ere.GetPathAttributes() {
+			for _, pa := range *ere.GetPathAttributes() {
 				eps += fmt.Sprintf("%v", pa.ToBytes())
 			}
 			if aps != eps {
@@ -98,4 +99,75 @@ func diffAdjRibOut(a, e *AdjRibOut) bool {
 		}
 	}
 	return true
+}
+
+// AdjRibOutからUpdateMessageを生成する機能のテスト
+// peerの機能を使用するため、本テストはpeerパッケージのテストとして実行する
+func TestUpdateMessageFromAdjRibOut(t *testing.T) {
+	// 本テストの値は環境によって異なる。
+	// 本実装では開発機, テスト実施機に
+	// 10.200.100.0/24 に属するIPが付与されていることを仮定している。
+	// docker composeした環境のhost2で実行することを仮定している。
+
+	someAS := bgptype.AutonomousSystemNumber(64513)
+	someIP := net.ParseIP("10.0.100.3").To4()
+
+	localAS := bgptype.AutonomousSystemNumber(64514)
+	localIP := net.ParseIP("10.200.100.3").To4()
+
+	igp := bgptype.IGP
+	nhSome := bgptype.NextHop(someIP)
+
+	ribPAs := []bgptype.PathAttribute{
+		&igp,
+		bgptype.NewAsPath(true, someAS),
+		&nhSome,
+	}
+
+	nhLocal := bgptype.NextHop(localIP)
+
+	updateMsgPAs := []bgptype.PathAttribute{
+		&igp,
+		bgptype.NewAsPath(true, someAS, localAS),
+		&nhLocal,
+	}
+
+	adjRibOut := NewAdjRibOut()
+	adjRibOut.Insert(
+		NewRibEntry(
+			&net.IPNet{
+				IP:   net.ParseIP("10.100.220.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			ribPAs...,
+		),
+	)
+
+	expectedUpdateMsg, err := packets.NewUpdateMessage(
+		updateMsgPAs,
+		[]*net.IPNet{
+			{
+				IP:   net.ParseIP("10.100.220.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+		},
+		[]*net.IPNet{},
+	)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	expectedMsgs := []*packets.UpdateMessage{expectedUpdateMsg}
+	acctualUpdateMsg, err := adjRibOut.ToUpdateMessages(localIP, localAS)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	var want, get string
+	for i, msg := range expectedMsgs {
+		want += msg.Show()
+		get += acctualUpdateMsg[i].Show()
+	}
+	if want != get {
+		t.Errorf("Want: %v, \nGot: %v", want, get)
+	}
 }
