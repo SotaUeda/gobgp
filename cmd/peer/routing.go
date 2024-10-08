@@ -136,6 +136,25 @@ func (rib *Rib) Routes() []*RibEntry {
 	return rts
 }
 
+func (rib *Rib) UpsateToAllUnchanged() {
+	rib.mu.Lock()
+	defer rib.mu.Unlock()
+	for rt := range rib.entries {
+		rib.entries[rt] = UN_CHANGED_RIB_ENT
+	}
+}
+
+func (rib *Rib) DoseContainNewRoute() bool {
+	rib.mu.Lock()
+	defer rib.mu.Unlock()
+	for _, status := range rib.entries {
+		if status == NEW_RIB_ENT {
+			return true
+		}
+	}
+	return false
+}
+
 // AdjRibOut
 type AdjRibOut struct {
 	Rib *Rib

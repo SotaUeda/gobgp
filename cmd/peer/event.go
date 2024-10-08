@@ -19,6 +19,10 @@ const (
 	// StateがEstablishedに遷移したことを表す
 	// 存在する方が実装が楽なため追加したオリジナルイベント
 	ESTABLISHED_STATE_EVENT
+	// LocRib / AdjRibOut が変わったときのイベント
+	// 存在する方が実装が楽なため追加
+	LocRibChanged
+	AdjRibOutChanged
 )
 
 func (ev Event) Show() string {
@@ -33,6 +37,10 @@ func (ev Event) Show() string {
 		return "Recieved Keepalive Message"
 	case ESTABLISHED_STATE_EVENT:
 		return "Established"
+	case LocRibChanged:
+		return "LocRib Changed"
+	case AdjRibOutChanged:
+		return "AdjRibOut Changed"
 	default:
 		return fmt.Sprintf("%v", ev)
 	}

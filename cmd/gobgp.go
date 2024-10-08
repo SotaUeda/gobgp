@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -24,7 +25,17 @@ func main() {
 			fmt.Printf("Config Error: %v\n", err)
 			os.Exit(1)
 		}
-		peers = append(peers, *peer.NewPeer(c))
+		// LocRibはすべてのPeerで共有する
+		// 排他制御のためにsync.Mutexを使う
+		locRib, err := peer.NewLocRib(c)
+		if err != nil {
+			fmt.Printf("LocRib Error: %v\n", err)
+			os.Exit(1)
+		}
+		var mu sync.Mutex
+		mu.Lock()
+		peers = append(peers, *peer.NewPeer(c, locRib))
+		mu.Unlock()
 	}
 	for _, p := range peers {
 		p.Start()

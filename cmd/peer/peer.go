@@ -16,13 +16,17 @@ type Peer struct {
 	EventQueue chan Event
 	TCPConn    *Connection
 	Config     *Config
+	LocRib     *LocRib
+	AdjRibOut  *AdjRibOut
 }
 
-func NewPeer(conf *Config) *Peer {
+func NewPeer(conf *Config, locRib *LocRib) *Peer {
 	p := &Peer{
 		State:      IDLE,
 		EventQueue: make(chan Event),
 		Config:     conf,
+		LocRib:     locRib,
+		AdjRibOut:  NewAdjRibOut(),
 	}
 	return p
 }
@@ -122,6 +126,30 @@ func (p *Peer) handleEvent(ev Event) error {
 		case KEEPALIVE_MSG:
 			p.State = ESTABLISHED
 			go func() { p.EventQueue <- ESTABLISHED_STATE_EVENT }()
+		}
+	case ESTABLISHED:
+		switch ev {
+		case ESTABLISHED_STATE_EVENT, LocRibChanged:
+			locRib := p.LocRib
+			p.AdjRibOut.InstallFromLocRib(locRib, p.Config)
+			if p.AdjRibOut.Rib.DoseContainNewRoute() {
+				go func() { p.EventQueue <- AdjRibOutChanged }()
+				p.AdjRibOut.Rib.UpsateToAllUnchanged()
+			}
+		case AdjRibOutChanged:
+			ums, err := p.AdjRibOut.ToUpdateMessages(
+				p.Config.LocalIP,
+				p.Config.LocalAS,
+			)
+			if err != nil {
+				return err
+			}
+			for _, um := range ums {
+				if p.TCPConn == nil {
+					return fmt.Errorf("TCP Connectionが確立できていません")
+				}
+				p.TCPConn.Send(um)
+			}
 		}
 	}
 	return nil
