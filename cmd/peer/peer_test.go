@@ -8,13 +8,21 @@ import (
 
 func TestPeerCanTransitionToConnectState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.1 64513 127.0.0.2 active")
-	peer := NewPeer(config)
+	locRib, err := NewLocRib(config)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	peer := NewPeer(config, locRib)
 	peer.Start()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.2 64512 127.0.0.1 passive")
-		remote_peer := NewPeer(remote_config)
+		remote_locRib, err := NewLocRib(remote_config)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+		remote_peer := NewPeer(remote_config, remote_locRib)
 		remote_peer.Start()
 		remote_peer.Next(ctx)
 	}()
@@ -30,13 +38,21 @@ func TestPeerCanTransitionToConnectState(t *testing.T) {
 
 func TestPeerCanTransitionToOpenSentState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.3 64513 127.0.0.4 active")
-	peer := NewPeer(config)
+	locRib, err := NewLocRib(config)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	peer := NewPeer(config, locRib)
 	peer.Start()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.4 64512 127.0.0.3 passive")
-		remote_peer := NewPeer(remote_config)
+		remote_locRib, err := NewLocRib(remote_config)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+		remote_peer := NewPeer(remote_config, remote_locRib)
 		remote_peer.Start()
 		remote_peer.Next(ctx)
 		remote_peer.Next(ctx) // イベントをenqueueできていない？
@@ -54,13 +70,21 @@ func TestPeerCanTransitionToOpenSentState(t *testing.T) {
 
 func TestPeerCanTransitionToOpenConfirmState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.5 64513 127.0.0.6 active")
-	peer := NewPeer(config)
+	locRib, err := NewLocRib(config)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	peer := NewPeer(config, locRib)
 	peer.Start()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.6 64512 127.0.0.5 passive")
-		remote_peer := NewPeer(remote_config)
+		remote_locRib, err := NewLocRib(remote_config)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+		remote_peer := NewPeer(remote_config, remote_locRib)
 		remote_peer.Start()
 		maxStep := 50
 		for i := 0; i < maxStep; i++ {
@@ -90,13 +114,21 @@ func TestPeerCanTransitionToOpenConfirmState(t *testing.T) {
 
 func TestPeerCanTransitionToEstablishedState(t *testing.T) {
 	config, _ := ParseConfig("64512 127.0.0.7 64513 127.0.0.8 active")
-	peer := NewPeer(config)
+	locRib, err := NewLocRib(config)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	peer := NewPeer(config, locRib)
 	peer.Start()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
 		remote_config, _ := ParseConfig("64513 127.0.0.8 64512 127.0.0.9 passive")
-		remote_peer := NewPeer(remote_config)
+		remote_locRib, err := NewLocRib(remote_config)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+		remote_peer := NewPeer(remote_config, remote_locRib)
 		remote_peer.Start()
 		maxStep := 50
 		for i := 0; i < maxStep; i++ {
