@@ -14,10 +14,13 @@ import (
 type Peer struct {
 	State      State
 	EventQueue chan Event
-	TCPConn    *Connection
-	Config     *Config
-	LocRib     *LocRib
-	AdjRibOut  *AdjRibOut
+	// UpdateMessageを処理するため、強引にMessageを埋め込む
+	Msg       packets.Message
+	TCPConn   *Connection
+	Config    *Config
+	LocRib    *LocRib
+	AdjRibOut *AdjRibOut
+	AdjRibIn  *AdjRibIn
 }
 
 func NewPeer(conf *Config, locRib *LocRib) *Peer {
@@ -26,7 +29,8 @@ func NewPeer(conf *Config, locRib *LocRib) *Peer {
 		EventQueue: make(chan Event),
 		Config:     conf,
 		LocRib:     locRib,
-		AdjRibOut:  NewAdjRibOut(),
+		AdjRibOut:  NewAdjRibOut(locRib.Rib),
+		AdjRibIn:   NewAdjRibIn(locRib.Rib),
 	}
 	return p
 }
@@ -73,7 +77,10 @@ func (p *Peer) handleMessage(m packets.Message) {
 	case *packets.KeepaliveMessage:
 		go func() { p.EventQueue <- KEEPALIVE_MSG }()
 	case *packets.UpdateMessage:
-		go func() { p.EventQueue <- UPDATE_MSG }()
+		go func() {
+			p.Msg = m
+			p.EventQueue <- UPDATE_MSG
+		}()
 	}
 }
 
@@ -149,6 +156,26 @@ func (p *Peer) handleEvent(ev Event) error {
 					return fmt.Errorf("TCP Connectionが確立できていません")
 				}
 				p.TCPConn.Send(um)
+			}
+		case UPDATE_MSG:
+			if p.Msg == nil {
+				return fmt.Errorf("UpdateMessageがありません")
+			}
+			um := p.Msg.(*packets.UpdateMessage)
+			p.AdjRibIn.InstallFromUpdate(um, p.Config)
+			if p.AdjRibIn.Rib.DoseContainNewRoute() {
+				fmt.Println("adj_rib in is updated.")
+				go func() { p.EventQueue <- AdjRibInChanged }()
+				p.AdjRibIn.Rib.UpsateToAllUnchanged()
+			}
+		case AdjRibInChanged:
+			p.LocRib.Rib.mu.Lock()
+			defer p.LocRib.Rib.mu.Unlock()
+			p.LocRib.InstallFromAdjRibIn(p.AdjRibIn)
+			if p.LocRib.Rib.DoseContainNewRoute() {
+				p.LocRib.WriteToKernelRoutingTable()
+				go func() { p.EventQueue <- LocRibChanged }()
+				p.LocRib.Rib.UpsateToAllUnchanged()
 			}
 		}
 	}

@@ -49,10 +49,10 @@ func TestLocRibToAdjRibOut(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
-	adjRibOut := NewAdjRibOut()
+	adjRibOut := NewAdjRibOut(NewRib())
 	adjRibOut.InstallFromLocRib(lr, config)
 
-	expected_adjRibOut := NewAdjRibOut()
+	expected_adjRibOut := NewAdjRibOut(NewRib())
 
 	nw := &net.IPNet{
 		IP:   net.ParseIP("10.100.220.0").To4(),
@@ -132,7 +132,7 @@ func TestUpdateMessageFromAdjRibOut(t *testing.T) {
 		&nhLocal,
 	}
 
-	adjRibOut := NewAdjRibOut()
+	adjRibOut := NewAdjRibOut(NewRib())
 	adjRibOut.Insert(
 		NewRibEntry(
 			&net.IPNet{

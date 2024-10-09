@@ -46,6 +46,25 @@ func NewLocRib(c *Config) (*LocRib, error) {
 	return locRib, nil
 }
 
+func (lr *LocRib) WriteToKernelRoutingTable() error {
+	for _, e := range lr.Rib.Routes() {
+		for _, p := range *e.GetPathAttributes() {
+			switch t := p.(type) {
+			case *bgptype.NextHop:
+				dest := e.NwAddr
+				route := &netlink.Route{
+					Dst: dest,
+					Gw:  net.IP([]byte(*t)),
+				}
+				if err := netlink.RouteAdd(route); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // 各種Ribの処理の際、以前に処理したエントリは再処理する必要がない。
 // その判別のためのステータス
 type RibEntryStatus int
@@ -160,8 +179,8 @@ type AdjRibOut struct {
 	Rib *Rib
 }
 
-func NewAdjRibOut() *AdjRibOut {
-	return &AdjRibOut{Rib: NewRib()}
+func NewAdjRibOut(rib *Rib) *AdjRibOut {
+	return &AdjRibOut{Rib: rib}
 }
 
 func (aro *AdjRibOut) Insert(re *RibEntry) {
@@ -228,6 +247,40 @@ func (aro *AdjRibOut) ToUpdateMessages(
 	}
 
 	return ums, nil
+}
+
+type AdjRibIn struct {
+	Rib *Rib
+}
+
+func NewAdjRibIn(rib *Rib) *AdjRibIn {
+	return &AdjRibIn{Rib: rib}
+}
+
+func (ari *AdjRibIn) InstallFromUpdate(
+	um *packets.UpdateMessage,
+	config *Config,
+) {
+	// TODO: withDrawnに対応する
+	pa := um.PathAttributes
+	for _, nw := range um.NetworkLayerReachabilityInformation {
+		re := NewRibEntry(nw, pa...)
+		// PathAttributeが変わっていたらインストールする必要がある
+		ari.Rib.Insert(re)
+	}
+}
+
+// AdjRibInからLocRibに必要なルートをインストールする。
+// この時、自ASが含まれているルートはインストールしない。
+// 参考: 9.1.2.  Phase 2: Route Selection in RFC4271.
+func (lr *LocRib) InstallFromAdjRibIn(ari *AdjRibIn) {
+	rts := ari.Rib.Routes()
+	for _, rt := range rts {
+		if rt.containAS(lr.LocalASNum) {
+			continue
+		}
+		lr.Rib.Insert(rt)
+	}
 }
 
 func (rib *LocRib) LookupRoutingTable(dst *net.IPNet) ([]*net.IPNet, error) {

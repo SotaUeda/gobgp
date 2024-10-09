@@ -19,10 +19,11 @@ const (
 	// StateがEstablishedに遷移したことを表す
 	// 存在する方が実装が楽なため追加したオリジナルイベント
 	ESTABLISHED_STATE_EVENT
-	// LocRib / AdjRibOut が変わったときのイベント
+	// LocRib / AdjRibOut /AdjRibIn が変わったときのイベント
 	// 存在する方が実装が楽なため追加
 	LocRibChanged
 	AdjRibOutChanged
+	AdjRibInChanged
 )
 
 func (ev Event) Show() string {
