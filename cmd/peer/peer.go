@@ -138,14 +138,14 @@ func (p *Peer) handleEvent(ev Event) error {
 		}
 	case ESTABLISHED:
 		switch ev {
-		case ESTABLISHED_STATE_EVENT, LocRibChanged:
+		case ESTABLISHED_STATE_EVENT, LOC_RIB_CHANGED:
 			locRib := p.LocRib
 			p.AdjRibOut.InstallFromLocRib(locRib, p.Config)
 			if p.AdjRibOut.Rib.DoseContainNewRoute() {
-				go func() { p.EventQueue <- AdjRibOutChanged }()
+				go func() { p.EventQueue <- ADJ_RIB_OUT_CHANGED }()
 				p.AdjRibOut.Rib.UpsateToAllUnchanged()
 			}
-		case AdjRibOutChanged:
+		case ADJ_RIB_OUT_CHANGED:
 			ums, err := p.AdjRibOut.ToUpdateMessages(
 				p.Config.LocalIP,
 				p.Config.LocalAS,
@@ -167,16 +167,16 @@ func (p *Peer) handleEvent(ev Event) error {
 			p.AdjRibIn.InstallFromUpdate(um, p.Config)
 			if p.AdjRibIn.Rib.DoseContainNewRoute() {
 				fmt.Println("adj_rib in is updated.")
-				go func() { p.EventQueue <- AdjRibInChanged }()
+				go func() { p.EventQueue <- ADJ_RIB_IN_CHANGED }()
 				p.AdjRibIn.Rib.UpsateToAllUnchanged()
 			}
-		case AdjRibInChanged:
+		case ADJ_RIB_IN_CHANGED:
 			p.LocRib.InstallFromAdjRibIn(p.AdjRibIn)
 			if p.LocRib.Rib.DoseContainNewRoute() {
 				if err := p.LocRib.WriteToKernelRoutingTable(); err != nil {
 					return err
 				}
-				go func() { p.EventQueue <- LocRibChanged }()
+				go func() { p.EventQueue <- LOC_RIB_CHANGED }()
 				p.LocRib.Rib.UpsateToAllUnchanged()
 			}
 		}

@@ -21,9 +21,9 @@ const (
 	ESTABLISHED_STATE_EVENT
 	// LocRib / AdjRibOut /AdjRibIn が変わったときのイベント
 	// 存在する方が実装が楽なため追加
-	LocRibChanged
-	AdjRibOutChanged
-	AdjRibInChanged
+	LOC_RIB_CHANGED
+	ADJ_RIB_OUT_CHANGED
+	ADJ_RIB_IN_CHANGED
 )
 
 func (ev Event) Show() string {
@@ -40,11 +40,11 @@ func (ev Event) Show() string {
 		return "Recieved Update Message"
 	case ESTABLISHED_STATE_EVENT:
 		return "Established"
-	case LocRibChanged:
+	case LOC_RIB_CHANGED:
 		return "LocRib Changed"
-	case AdjRibOutChanged:
+	case ADJ_RIB_OUT_CHANGED:
 		return "AdjRibOut Changed"
-	case AdjRibInChanged:
+	case ADJ_RIB_IN_CHANGED:
 		return "AdjRibIn Changed"
 	default:
 		return fmt.Sprintf("%v", ev)
