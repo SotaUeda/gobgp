@@ -1,6 +1,7 @@
 package peer
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
@@ -59,6 +60,7 @@ func (lr *LocRib) WriteToKernelRoutingTable() error {
 				if err := netlink.RouteAdd(route); err != nil {
 					return err
 				}
+				fmt.Printf("Add Route: %v\n", route)
 			}
 		}
 	}
@@ -142,6 +144,7 @@ func (rib *Rib) Insert(re *RibEntry) {
 	defer rib.mu.Unlock()
 	if _, ok := rib.entries[re]; !ok {
 		rib.entries[re] = NEW_RIB_ENT
+		fmt.Printf("Insert: %v\n", re.NwAddr)
 	}
 }
 

@@ -45,7 +45,10 @@ func main() {
 	for _, p := range peers {
 		go func() {
 			for {
-				p.Next(ctx)
+				if err := p.Next(ctx); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				time.Sleep(100 * time.Millisecond)
 			}
 		}()

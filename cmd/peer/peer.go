@@ -29,8 +29,8 @@ func NewPeer(conf *Config, locRib *LocRib) *Peer {
 		EventQueue: make(chan Event),
 		Config:     conf,
 		LocRib:     locRib,
-		AdjRibOut:  NewAdjRibOut(locRib.Rib),
-		AdjRibIn:   NewAdjRibIn(locRib.Rib),
+		AdjRibOut:  NewAdjRibOut(NewRib()),
+		AdjRibIn:   NewAdjRibIn(NewRib()),
 	}
 	return p
 }
@@ -47,7 +47,9 @@ func (p *Peer) Next(ctx context.Context) error {
 		select {
 		case ev := <-p.EventQueue:
 			fmt.Printf("event is occured, event=%v.\n", ev.Show())
-			p.handleEvent(ev)
+			if err := p.handleEvent(ev); err != nil {
+				return err
+			}
 			return nil
 		case <-ctx.Done():
 			fmt.Print("func next is done.\n")
@@ -169,11 +171,11 @@ func (p *Peer) handleEvent(ev Event) error {
 				p.AdjRibIn.Rib.UpsateToAllUnchanged()
 			}
 		case AdjRibInChanged:
-			p.LocRib.Rib.mu.Lock()
-			defer p.LocRib.Rib.mu.Unlock()
 			p.LocRib.InstallFromAdjRibIn(p.AdjRibIn)
 			if p.LocRib.Rib.DoseContainNewRoute() {
-				p.LocRib.WriteToKernelRoutingTable()
+				if err := p.LocRib.WriteToKernelRoutingTable(); err != nil {
+					return err
+				}
 				go func() { p.EventQueue <- LocRibChanged }()
 				p.LocRib.Rib.UpsateToAllUnchanged()
 			}

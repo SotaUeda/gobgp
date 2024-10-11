@@ -36,12 +36,16 @@ func (ev Event) Show() string {
 		return "BGP Open"
 	case KEEPALIVE_MSG:
 		return "Recieved Keepalive Message"
+	case UPDATE_MSG:
+		return "Recieved Update Message"
 	case ESTABLISHED_STATE_EVENT:
 		return "Established"
 	case LocRibChanged:
 		return "LocRib Changed"
 	case AdjRibOutChanged:
 		return "AdjRibOut Changed"
+	case AdjRibInChanged:
+		return "AdjRibIn Changed"
 	default:
 		return fmt.Sprintf("%v", ev)
 	}
